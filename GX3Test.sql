@@ -5,7 +5,7 @@ SELECT DISTINCT
     MAX(wdj.build_sequence) OVER (partition BY wsg.schedule_group_name, we.wip_entity_name) bs,
     MAX(wdj.scheduled_start_date) OVER (partition BY wsg.schedule_group_name, we.wip_entity_name) sched,
     MAX(wdj.start_quantity) OVER (partition BY wsg.schedule_group_name, we.wip_entity_name) ord_qty,
-    MAX(wdj.quantity_completed) OVER (partition BY wsg.schedule_group_name, we.wip_entity_name) bf_d
+    MAX(wdj.quantity_completed) OVER (partition BY wsg.schedule_group_name, we.wip_entity_name) quantity_completed
 
 FROM
     bwc_production bp
