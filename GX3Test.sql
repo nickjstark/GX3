@@ -1,18 +1,20 @@
 SELECT DISTINCT
     wsg.schedule_group_name sched_group,
-    MAX(model_number) OVER (partition BY wsg.schedule_group_name, we.wip_entity_name) sched_model,
-    MAX(we.wip_entity_name) OVER (partition BY wsg.schedule_group_name, we.wip_entity_name) wo,
-    MAX(wdj.build_sequence) OVER (partition BY wsg.schedule_group_name, we.wip_entity_name) build_sequence,
-    MAX(wdj.scheduled_start_date) OVER (partition BY wsg.schedule_group_name, we.wip_entity_name) sched,
-    MAX(wdj.start_quantity) OVER (partition BY wsg.schedule_group_name, we.wip_entity_name) ord_qty,
-    MAX(wdj.quantity_completed) OVER (partition BY wsg.schedule_group_name, we.wip_entity_name) quantity_completed
+    substr(build_sequence,1,5) build_sequence,
+    MAX(wdj.scheduled_start_date) OVER (PARTITION BY wsg.schedule_group_name, substr(build_sequence,1,5)) scheduled_start_date,
+    CASE WHEN TO_CHAR(wdj.scheduled_start_date, 'D') IN(2, 3) THEN 'MONDAY_SCHEDULE'
+         WHEN TO_CHAR(wdj.scheduled_start_date, 'D') IN(4, 5, 6) THEN 'WEDNESDAY_SCHEDULE'
+         ELSE 'WEEKEND_SCHEDULE' END AS schedule_start_day,
+    SUM(wdj.start_quantity) OVER (PARTITION BY wsg.schedule_group_name, substr(build_sequence,1,5)) total_qty,
+    SUM(wdj.quantity_completed) OVER (PARTITION BY wsg.schedule_group_name, substr(build_sequence,1,5)) quantity_completed,
+    wdj.scheduled_start_date
 
 FROM
-    bwc_production bp
+    wip.wip_move_transactions wmt
 JOIN wip.wip_entities we
 ON
-    we.wip_entity_name = bp.work_order_number
-    AND we.organization_id = bp.organization_id
+    we.wip_entity_name = wmt.wip_entity_id
+    AND we.organization_id = wmt.organization_id
     AND we.organization_id = 101
 JOIN wip.wip_discrete_jobs wdj
 ON
@@ -22,13 +24,12 @@ ON
     wsg.schedule_group_id = wdj.schedule_group_id
     AND wsg.schedule_group_name IN ('COMMASSY', 'HS GAS','HS ELEC','SPEC')
 WHERE
-    --bp.date_time_completion BETWEEN sysdate - 1 AND sysdate
-    wdj.scheduled_start_date <= NEXT_DAY(TRUNC(sysdate), 'MONDAY') - 5                                                    -- Get everything starting from last Monday and previous (add Wednesday?)
-    AND bp.production_line IN ('COM1', 'HSS','HSE','HSG')                                                                 -- Are there additional lines to monitor?
-    AND bp.organization_id = 101
+    wdj.scheduled_start_date >= NEXT_DAY(TRUNC(sysdate), 'MONDAY') - 7                                                 -- Get everything starting from last Monday and previous (add Wednesday?)
+    AND wmt.organization_id = 101
     AND wdj.quantity_completed != wdj.start_quantity                                                                      -- Get anything that isn't complete
-    AND wdj.status_type = 3 OR wdj.status_type = 6                                                                        -- status_type 3 = Released and 6 = On Hold
+    AND (wdj.status_type = 3 OR wdj.status_type = 6)                                                                     -- status_type 3 = Released and 6 = On Hold
 
 ORDER BY
     sched_group,
-    build_sequence;
+    build_sequence,
+    schedule_start_day;
