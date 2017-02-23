@@ -24,10 +24,10 @@ ON
     wsg.schedule_group_id = wdj.schedule_group_id
     AND wsg.schedule_group_name IN ('COMMASSY', 'HS GAS','HS ELEC','SPEC')
 WHERE
-    wdj.scheduled_start_date >= NEXT_DAY(TRUNC(sysdate), 'MONDAY') - 7                                                 -- Get everything starting from last Monday and previous (add Wednesday?)
+    wdj.scheduled_start_date >= NEXT_DAY(TRUNC(sysdate), 'MONDAY') - 7
     AND wmt.organization_id = 101
-    AND wdj.quantity_completed != wdj.start_quantity                                                                      -- Get anything that isn't complete
-    AND (wdj.status_type = 3 OR wdj.status_type = 6)                                                                     -- status_type 3 = Released and 6 = On Hold
+    AND wdj.quantity_completed != wdj.start_quantity                                                -- Get anything that isn't complete
+    AND wdj.status_type IN (3, 6)                                                                   -- status_type 3 = Released and 6 = On Hold
 
 ORDER BY
     sched_group,
