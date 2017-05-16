@@ -2,9 +2,11 @@ SELECT DISTINCT
     wsg.schedule_group_name sched_group,
     substr(build_sequence,1,5) build_sequence,
     MAX(wdj.scheduled_start_date) OVER (PARTITION BY wsg.schedule_group_name, substr(build_sequence,1,5)) scheduled_start_date,
-    CASE WHEN TO_CHAR(wdj.scheduled_start_date, 'D') IN(2, 3) THEN 'MONDAY_SCHEDULE'
-         WHEN TO_CHAR(wdj.scheduled_start_date, 'D') IN(4, 5, 6) THEN 'WEDNESDAY_SCHEDULE'
-         ELSE 'WEEKEND_SCHEDULE' END AS schedule_start_day,
+    CASE
+        WHEN TO_CHAR(wdj.scheduled_start_date, 'D') IN(2, 3) THEN 'MONDAY_SCHEDULE'
+        WHEN TO_CHAR(wdj.scheduled_start_date, 'D') IN(4, 5, 6) THEN 'WEDNESDAY_SCHEDULE'
+        ELSE 'WEEKEND_SCHEDULE'
+    END AS schedule_start_day,
     SUM(wdj.start_quantity) OVER (PARTITION BY wsg.schedule_group_name, substr(build_sequence,1,5)) total_qty,
     SUM(wdj.quantity_completed) OVER (PARTITION BY wsg.schedule_group_name, substr(build_sequence,1,5)) quantity_completed,
     wdj.scheduled_start_date
