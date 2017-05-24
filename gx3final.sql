@@ -21,6 +21,7 @@ FROM wip_move_transactions wmt
                     bp.work_order_number
                 FROM bwc_production bp
                 WHERE bp.production_line = 'REP'
+                AND bp.organization_id = 101 
                 AND bp.date_time_completion BETWEEN trunc(to_date('17-MAY-2017 03:00:00','DD-MON-YYYY HH24:MI:SS')) + 3 / 24 AND trunc(SYSDATE) + 3 / 24) REPAIRS
         ON REPAIRS.WORK_ORDER_NUMBER = WE.WIP_ENTITY_NAME
 
